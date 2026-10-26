@@ -13,6 +13,13 @@
       "description": "FreeCell, a Windows XP FreeCell clone.",
       "enabled": true,
       "fingerprint": "2398539B128504C1A12494EA9ABE06E7A90C5CD7F25872B7C6D8383033AF28FD"
+    },
+    {
+      "address": "https://jpsutton.github.io/inkstash/fdroid/repo",
+      "name": "inkstash",
+      "description": "inkstash, a Disney Lorcana collection tracker for Android tablets.",
+      "enabled": true,
+      "fingerprint": "F3A285D2FB80CB9BE09CEE78B13582A051A4BC2F41BAF973F768ABA2ADA57A36"
     }
   ]
 }
