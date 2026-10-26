@@ -27,7 +27,6 @@ import com.looker.droidify.installer.InstallManager
 import com.looker.droidify.installer.model.InstallItem
 import com.looker.droidify.ui.appDetail.AppDetailFragment
 import com.looker.droidify.ui.favourites.FavouritesFragment
-import com.looker.droidify.ui.repository.EditRepositoryFragment
 import com.looker.droidify.ui.repository.RepositoriesFragment
 import com.looker.droidify.ui.repository.RepositoryFragment
 import com.looker.droidify.ui.settings.SettingsFragment
@@ -334,12 +333,13 @@ class MainActivity : AppCompatActivity() {
 
     fun navigateRepositories() = pushFragment(RepositoriesFragment())
     fun navigatePreferences() = pushFragment(SettingsFragment.newInstance())
-    fun navigateAddRepository(repoAddress: String? = null) =
-        pushFragment(EditRepositoryFragment(null, repoAddress))
+    // Repository list is static (see Repository.defaultRepositories): add/edit are disabled.
+    @Suppress("UNUSED_PARAMETER")
+    fun navigateAddRepository(repoAddress: String? = null) = Unit
 
     fun navigateRepository(repositoryId: Long) =
         pushFragment(RepositoryFragment(repositoryId))
 
-    fun navigateEditRepository(repositoryId: Long) =
-        pushFragment(EditRepositoryFragment(repositoryId, null))
+    @Suppress("UNUSED_PARAMETER")
+    fun navigateEditRepository(repositoryId: Long) = Unit
 }

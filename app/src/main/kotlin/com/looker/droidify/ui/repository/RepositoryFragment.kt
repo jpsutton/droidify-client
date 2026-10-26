@@ -147,15 +147,9 @@ class RepositoryFragment() : ScreenFragment() {
                 }
             }
 
-            editRepoButton.setOnClickListener {
-                mainActivity.navigateEditRepository(viewModel.id)
-            }
-
-            deleteRepoButton.setOnClickListener {
-                MessageDialog(
-                    Message.DeleteRepositoryConfirm,
-                ).show(childFragmentManager)
-            }
+            // Repository list is static: no edit / delete.
+            editRepoButton.visibility = View.GONE
+            deleteRepoButton.visibility = View.GONE
         }
     }
 

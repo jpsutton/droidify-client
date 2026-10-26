@@ -1,0 +1,18 @@
+{
+  "repositories": [
+    {
+      "address": "https://jpsutton.github.io/patchbay/fdroid/repo",
+      "name": "Patchbay",
+      "description": "Patchbay Remote, the phone app for a Patchbay mesh.",
+      "enabled": true,
+      "fingerprint": "D634BFC58A496FCEA75C541E594E68578D9070BEF965C92752F2EBEA1EA25E8F"
+    },
+    {
+      "address": "https://jpsutton.github.io/freecell/fdroid/repo",
+      "name": "FreeCell",
+      "description": "FreeCell, a Windows XP FreeCell clone.",
+      "enabled": true,
+      "fingerprint": "2398539B128504C1A12494EA9ABE06E7A90C5CD7F25872B7C6D8383033AF28FD"
+    }
+  ]
+}

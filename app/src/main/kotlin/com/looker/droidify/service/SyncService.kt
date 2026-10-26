@@ -18,6 +18,7 @@ import com.looker.droidify.database.Database
 import com.looker.droidify.datastore.Settings
 import com.looker.droidify.datastore.SettingsRepository
 import com.looker.droidify.datastore.model.AutoSync
+import com.looker.droidify.index.RemoteRepositories
 import com.looker.droidify.index.RepositoryUpdater
 import com.looker.droidify.model.ProductItem
 import com.looker.droidify.model.Repository
@@ -204,38 +205,16 @@ class SyncService : ConnectionService<SyncService.Binder>() {
             }
         }
 
-        fun setEnabled(repository: Repository, enabled: Boolean): Boolean {
-            Database.RepositoryAdapter.put(repository.enable(enabled))
-            val settings = runBlocking { settingsRepository.getInitial() }
-            if (enabled) {
-                val isRepoInTasks = repository.id != currentTask?.task?.repositoryId &&
-                    !tasks.any { it.repositoryId == repository.id }
-                if (isRepoInTasks) {
-                    tasks += Task(repository.id, true)
-                    handleNextTask(false, settings)
-                }
-            } else {
-                cancelTasks { it.repositoryId == repository.id }
-                val cancelledTask = cancelCurrentTask {
-                    it.task?.repositoryId == repository.id
-                }
-                handleNextTask(cancelledTask?.hasUpdates == true, settings)
-            }
-            return true
-        }
+        // Repository list is static (see Repository.defaultRepositories); no runtime changes.
+        @Suppress("UNUSED_PARAMETER", "FunctionOnlyReturnsConstant")
+        fun setEnabled(repository: Repository, enabled: Boolean): Boolean = false
 
         fun isCurrentlySyncing(repositoryId: Long): Boolean {
             return currentTask?.task?.repositoryId == repositoryId
         }
 
-        fun deleteRepository(repositoryId: Long): Boolean {
-            val repository = Database.RepositoryAdapter.get(repositoryId)
-            return repository != null && run {
-                setEnabled(repository, false)
-                Database.RepositoryAdapter.markAsDeleted(repository.id)
-                true
-            }
-        }
+        @Suppress("UNUSED_PARAMETER", "FunctionOnlyReturnsConstant")
+        fun deleteRepository(repositoryId: Long): Boolean = false
 
         fun cancelAuto(): Boolean {
             val settings = runBlocking { settingsRepository.getInitial() }
@@ -674,7 +653,11 @@ class SyncService : ConnectionService<SyncService.Binder>() {
 
         override fun onStartJob(params: JobParameters): Boolean {
             syncParams = params
-            syncConnection.bind(this)
+            // Pick up repo list changes from the fork before the periodic sync.
+            jobScope.launch {
+                RemoteRepositories.refresh()
+                syncConnection.bind(this@Job)
+            }
             return true
         }
 

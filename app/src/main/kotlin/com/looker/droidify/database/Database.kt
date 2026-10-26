@@ -320,6 +320,43 @@ object Database {
             return if (newId != repository.id) repository.copy(id = newId) else repository
         }
 
+        /**
+         * Make the repository table match [list] exactly: extras are deleted, missing ones are
+         * added and `enabled` / `fingerprint` are reset to the listed values.
+         * Returns true if anything changed.
+         */
+        fun syncWith(list: List<Repository>): Boolean {
+            val wanted = list.distinctBy { it.address }
+            val wantedByAddress = wanted.associateBy { it.address }
+            var changed = false
+            db.transaction {
+                val existing = getAll()
+                existing.filter { it.address !in wantedByAddress }.forEach {
+                    markAsDeleted(it.id)
+                    changed = true
+                }
+                val existingByAddress = existing.associateBy { it.address }
+                wanted.forEach { target ->
+                    val current = existingByAddress[target.address]
+                    if (current == null) {
+                        put(target)
+                        changed = true
+                    } else if (
+                        current.enabled != target.enabled ||
+                        current.fingerprint != target.fingerprint
+                    ) {
+                        put(
+                            current
+                                .edit(target.address, target.fingerprint, current.authentication)
+                                .enable(target.enabled),
+                        )
+                        changed = true
+                    }
+                }
+            }
+            return changed
+        }
+
         fun removeDuplicates() {
             db.transaction {
                 val all = getAll()

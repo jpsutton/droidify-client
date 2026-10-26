@@ -22,6 +22,7 @@ import com.looker.droidify.content.ProductPreferences
 import com.looker.droidify.database.Database
 import com.looker.droidify.datastore.SettingsRepository
 import com.looker.droidify.datastore.get
+import com.looker.droidify.index.RemoteRepositories
 import com.looker.droidify.index.RepositoryUpdater
 import com.looker.droidify.installer.InstallManager
 import com.looker.droidify.network.Downloader
@@ -71,10 +72,18 @@ class Droidify : Application(), SingletonImageLoader.Factory, Configuration.Prov
         val databaseUpdated = Database.init(this)
         ProductPreferences.init(this, appScope)
         RepositoryUpdater.init(appScope, downloader)
+        RemoteRepositories.init(httpClient)
         listenApplications()
         checkLanguage()
         updatePreference()
         appScope.launch { installer() }
+        appScope.launch {
+            // Repo list comes from the fork on GitHub. Sync right away if it changed.
+            val listChanged = RemoteRepositories.refresh()
+            if (listChanged && !databaseUpdated) {
+                SyncService.forceSyncAll(applicationContext)
+            }
+        }
         if (databaseUpdated) {
             appScope.launch {
                 SyncService.forceSyncAll(applicationContext)

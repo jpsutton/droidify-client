@@ -8,7 +8,6 @@ import com.looker.droidify.database.Database.RepositoryAdapter
 import com.looker.droidify.database.Database.Schema
 import com.looker.droidify.database.Database.jsonParse
 import com.looker.droidify.database.Database.query
-import com.looker.droidify.index.OemRepositoryParser
 import com.looker.droidify.model.Repository
 import com.looker.droidify.utility.common.extension.asSequence
 import com.looker.droidify.utility.common.extension.firstOrNull
@@ -33,14 +32,12 @@ class DatabaseHelper(context: Context) :
 
         // Add default repositories for new database
         db.addDefaultRepositories()
-        db.addOemRepositories()
         this.created = true
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         db.removeRepositories()
         db.addNewlyAddedRepositories()
-        db.addOemRepositories()
         this.updated = true
     }
 
@@ -72,12 +69,6 @@ class DatabaseHelper(context: Context) :
             Schema.RBLog,
             Schema.DownloadStats,
         )
-    }
-
-    private fun SQLiteDatabase.addOemRepositories() {
-        OemRepositoryParser
-            .getSystemDefaultRepos()
-            ?.forEach { repo -> RepositoryAdapter.put(repo, database = this) }
     }
 
     private fun SQLiteDatabase.addDefaultRepositories() {

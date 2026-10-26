@@ -17,7 +17,6 @@ import com.looker.droidify.widget.CursorRecyclerAdapter
 
 class RepositoriesAdapter(
     private val navigate: (Repository) -> Unit,
-    private val onSwitch: (repository: Repository, isEnabled: Boolean) -> Boolean,
 ) : CursorRecyclerAdapter<RepositoriesAdapter.ViewType, RecyclerView.ViewHolder>() {
     enum class ViewType { REPOSITORY }
 
@@ -57,10 +56,8 @@ class RepositoriesAdapter(
                 navigate(getRepository(absoluteAdapterPosition))
             }
 
-            repoState.setOnClickListener {
-                isChecked = !isChecked
-                onSwitch(getRepository(absoluteAdapterPosition), isChecked)
-            }
+            // Enabled state is fixed at compile time; indicator is display only.
+            repoState.isClickable = false
         }
     }
 
