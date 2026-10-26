@@ -17,11 +17,32 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
+      GH_TOKEN: ${{ github.token }}
       # Secrets cannot be used in `if:` directly; expose whether the signing key exists.
       HAS_SIGNING_KEY: ${{ secrets.KEY_BASE64 != '' }}
+      # Pushes to main and manual runs publish a release. Pull requests only build.
+      IS_RELEASE: ${{ github.event_name != 'pull_request' }}
     steps:
       - uses: actions/checkout@v4
+
+      # Release tag is the UTC date, YYYYMMDD. A second release on the same day gets -2, -3, ...
+      # versionCode is YYYYMMDD * 100 + n, so it always increases and Android accepts the update.
+      - name: Pick version
+        id: version
+        if: env.IS_RELEASE == 'true'
+        run: |
+          day=$(date -u +%Y%m%d)
+          n=1
+          tag=$day
+          while gh release view "$tag" >/dev/null 2>&1; do
+            n=$((n + 1))
+            tag="$day-$n"
+          done
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "code=$((day * 100 + n))" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-java@v4
         with:
@@ -31,10 +52,17 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Build release APK
-        run: ./gradlew assembleRelease
+        run: |
+          if [ "$IS_RELEASE" = "true" ]; then
+            ./gradlew assembleRelease \
+              -PciVersionName="${{ steps.version.outputs.tag }}" \
+              -PciVersionCode="${{ steps.version.outputs.code }}"
+          else
+            ./gradlew assembleRelease
+          fi
 
-      # Pull requests from forks and repos without the secrets get an unsigned APK, which
-      # cannot be installed. Set KEY_BASE64, KEY_ALIAS and KEYSTORE_PASS to get a signed one.
+      # Without the signing secrets the APK stays unsigned and cannot be installed.
+      # Set KEY_BASE64, KEY_ALIAS and KEYSTORE_PASS to get a signed one.
       - uses: r0adkll/sign-android-release@v1
         name: Sign APK
         id: sign_app
@@ -61,3 +89,14 @@ jobs:
         with:
           name: droidify-unsigned
           path: app/build/outputs/apk/release/*.apk
+
+      - name: Publish release
+        if: env.IS_RELEASE == 'true' && env.HAS_SIGNING_KEY == 'true'
+        run: |
+          tag="${{ steps.version.outputs.tag }}"
+          cp "${{ steps.sign_app.outputs.signedReleaseFile }}" "droidify-$tag.apk"
+          gh release create "$tag" "droidify-$tag.apk" \
+            --title "$tag" \
+            --target "$GITHUB_SHA" \
+            --generate-notes \
+            --latest

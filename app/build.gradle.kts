@@ -20,8 +20,9 @@ android {
     defaultConfig {
         applicationId = "com.looker.droidify"
         minSdk = 23
-        versionName = "0.7.8"
-        versionCode = 780
+        // CI passes -PciVersionName / -PciVersionCode so every release is an installable update.
+        versionName = findProperty("ciVersionName") as String? ?: "0.7.8"
+        versionCode = (findProperty("ciVersionCode") as String?)?.toInt() ?: 780
 
         testInstrumentationRunner = "com.looker.droidify.TestRunner"
     }
