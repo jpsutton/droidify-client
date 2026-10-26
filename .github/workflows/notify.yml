@@ -11,6 +11,8 @@ on:
 
 jobs:
   prepare:
+    # Upstream-only: posts with the upstream project's Mastodon and Telegram tokens.
+    if: github.repository_owner == 'Droid-ify'
     runs-on: ubuntu-latest
     outputs:
       mastodon_content: ${{ steps.mastodon_message.outputs.content }}
